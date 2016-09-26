@@ -65,7 +65,7 @@ override(
 /**
  * Handle Remove Rendering behavior
  * */
-override('deleteControl', Obj.prototype,
+override('deleteControl', Obj,
     function (data, control) {
         mediator.emit(EVENT_BEFORE_REMOVE, this.chrome, control)
     },

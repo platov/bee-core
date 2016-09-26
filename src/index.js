@@ -1,21 +1,11 @@
+import EventEmitter from 'eventemitter3';
+
 class BeeCore {
     constructor() {
-        this.isExperienceEditor = false;
-        this.mediator = void 0;
-    }
-
-    init(mediator) {
         var self = this;
 
-        if (mediator) {
-            this.mediator = mediator;
-        }
-
-        if (!this.mediator) {
-            throw '[BeeCore] Mediator is missing.';
-        }
-
-        require('./chromeTypes');
+        this.isExperienceEditor = false;
+        this.mediator = new EventEmitter();
 
         (onload => {
             window.onload = function () {
@@ -29,13 +19,11 @@ class BeeCore {
 
                 self.isExperienceEditor = true;
 
-                this.mediator.emit('beeCore:ready', this);
+                require('./chromeTypes');
+
+                self.mediator.emit('beeCore:ready', this);
             }
         })(window.onload);
-
-        this.init = function () {
-            console.warn('BeeCore is already initialized.')
-        };
     }
 }
 

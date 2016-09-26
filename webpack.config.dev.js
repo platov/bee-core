@@ -3,9 +3,9 @@ let path = require('path');
 module.exports = {
     context: path.resolve('src'),
 
-    devtool: 'source-map',
+    devtool: 'inline-source-map',
 
-    entry: ['./mediator.polyfill', './index'],
+    entry: ['./index'],
 
     output: {
         path         : path.resolve('dist'),
