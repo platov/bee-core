@@ -1,10 +1,11 @@
 {
   "name": "bee-core",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "",
-  "main": "dist/bee-core.min.js",
+  "main": "dist/bee-core.js",
   "files": [
-    "dist"
+    "dist",
+    "src"
   ],
   "scripts": {
     "start": "webpack",
