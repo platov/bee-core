@@ -67,7 +67,7 @@ override(
  * */
 override('deleteControl', Obj,
     function (data, control) {
-        mediator.emit(EVENT_BEFORE_REMOVE, this.chrome, control)
+        beeCore.mediator.emit(EVENT_BEFORE_REMOVE, this.chrome, control)
     },
 
     function (data, control) {
