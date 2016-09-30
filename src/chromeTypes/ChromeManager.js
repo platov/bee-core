@@ -17,3 +17,4 @@ override('resetChromes', Sitecore.PageModes.ChromeManager,
     }
 );
 
+beeCore._registerDOMEvents(EVENT_BEFORE_RESET_CHROMES, EVENT_RESET_CHROMES);

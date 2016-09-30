@@ -23,10 +23,12 @@ override('update', Obj,
 );
 
 override('handleMessage', Obj,
-    function (data, message) {
+    function (__shared, message) {
         beeCore.mediator.emit(EVENT_BEFORE_HANDLE_MESSAGE, this.chrome, message);
     },
-    function (data, message) {
+    function (__shared, message) {
         beeCore.mediator.emit(EVENT_HANDLE_MESSAGE, this.chrome, message);
     }
 );
+
+beeCore._registerDOMEvents(EVENT_BEFORE_UPDATE, EVENT_UPDATE, EVENT_BEFORE_HANDLE_MESSAGE, EVENT_HANDLE_MESSAGE);

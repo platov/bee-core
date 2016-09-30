@@ -32,3 +32,5 @@ override('remove', Obj,
         beeCore.mediator.emit(EVENT_REMOVE, this);
     }
 );
+
+beeCore._registerDOMEvents(EVENT_BEFORE_EMPTY, EVENT_EMPTY, EVENT_BEFORE_REMOVE, EVENT_REMOVE);

@@ -3,10 +3,10 @@ import override from '../helpers/override';
 import beeCore from '../';
 
 const EVENT_PREFIX = `field:`;
-const EVENT_MODIFIED = `${EVENT_PREFIX}setModified`;
 const EVENT_BEFORE_MODIFIED = `${EVENT_PREFIX}before-setModified`;
-const EVENT_PERSIST = `${EVENT_PREFIX}persist`;
+const EVENT_MODIFIED = `${EVENT_PREFIX}setModified`;
 const EVENT_BEFORE_PERSIST = `${EVENT_PREFIX}before-persist`;
+const EVENT_PERSIST = `${EVENT_PREFIX}persist`;
 
 let Obj = Sitecore.PageModes.ChromeTypes.Field.prototype;
 
@@ -31,3 +31,5 @@ override('persistValue', Obj,
         beeCore.mediator.emit(EVENT_PERSIST, this.chrome);
     }
 );
+
+beeCore._registerDOMEvents(EVENT_BEFORE_MODIFIED, EVENT_MODIFIED, EVENT_BEFORE_PERSIST, EVENT_PERSIST);

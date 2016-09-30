@@ -2,38 +2,35 @@ import override from '../helpers/override';
 import beeCore from '../';
 
 const EVENT_PREFIX = `placeholder:`;
-const EVENT_INSERT = `${EVENT_PREFIX}insert`;
-const EVENT_BEFORE_INSERT = `${EVENT_PREFIX}before-insert`;
-const EVENT_MOVE = `${EVENT_PREFIX}move`;
-const EVENT_POP = `${EVENT_PREFIX}pop`;
+const EVENT_BEFORE_INSERT = `${EVENT_PREFIX}before-insertRendering`;
+const EVENT_INSERT = `${EVENT_PREFIX}insertRendering`;
+const EVENT_MOVE = `${EVENT_PREFIX}moveRendering`;
+const EVENT_POP = `${EVENT_PREFIX}popRendering`;
 const EVENT_BEFORE_REMOVE = `${EVENT_PREFIX}before-removeRendering`;
 const EVENT_REMOVE = `${EVENT_PREFIX}removeRendering`;
 
-var Obj = Sitecore.PageModes.ChromeTypes.Placeholder.prototype;
+let Obj = Sitecore.PageModes.ChromeTypes.Placeholder.prototype;
 
 /**
  * Handle Insert behavior on rendering creation
  * */
 override('insertRendering', Obj,
-    function (data) {
-        data.position = this._insertPosition;
+    function (__shared) {
+        __shared.position = this._insertPosition;
 
-        beeCore.mediator.emit(EVENT_BEFORE_INSERT, this.chrome, data.position);
+        beeCore.mediator.emit(EVENT_BEFORE_INSERT, this.chrome, __shared.position);
     },
 
-    function (data, renderingData) {
-        let el,
-            newRenderingUID,
-            newRenderingChrome;
+    function (__shared, data) {
+        let el, newRenderingUID, renderingChrome;
 
         el = document.createElement('div');
-
-        el.innerHTML = renderingData.html;
+        el.innerHTML = data.html;
 
         newRenderingUID = el.children[0].id.substring(2);
-        newRenderingChrome = this._getChildRenderingByUid(newRenderingUID);
+        renderingChrome = this._getChildRenderingByUid(newRenderingUID);
 
-        setTimeout(() => beeCore.mediator.emit(EVENT_INSERT, this.chrome, newRenderingChrome, data.position), 500);
+        setTimeout(() => beeCore.mediator.emit(EVENT_INSERT, this.chrome, renderingChrome, __shared.position), 500);
     }
 );
 
@@ -43,20 +40,20 @@ override('insertRendering', Obj,
 override(
     'insertRenderingAt', Obj,
 
-    function (data, control, position) {
-        data.oldPlaceholder = control.type.getPlaceholder();
-        data.newPlaceholder = this.chrome;
+    function (__shared, renderingChrome, position) {
+        __shared.oldPlaceholder = renderingChrome.type.getPlaceholder();
+        __shared.newPlaceholder = this.chrome;
 
-        if (data.oldPlaceholder !== data.newPlaceholder) {
-            beeCore.mediator.emit(EVENT_POP, data.oldPlaceholder, control);
+        if (__shared.oldPlaceholder !== __shared.newPlaceholder) {
+            beeCore.mediator.emit(EVENT_POP, __shared.oldPlaceholder, renderingChrome);
         }
     },
 
-    function (data, control, position) {
-        if (data.oldPlaceholder !== data.newPlaceholder) {
-            beeCore.mediator.emit(EVENT_INSERT, this.chrome, control, position);
+    function (__shared, renderingChrome, position) {
+        if (__shared.oldPlaceholder !== __shared.newPlaceholder) {
+            beeCore.mediator.emit(EVENT_INSERT, this.chrome, renderingChrome, position);
         } else {
-            beeCore.mediator.emit(EVENT_MOVE, data.oldPlaceholder, control, position);
+            beeCore.mediator.emit(EVENT_MOVE, this.chrome, renderingChrome, position);
         }
     }
 );
@@ -66,11 +63,14 @@ override(
  * Handle Remove Rendering behavior
  * */
 override('deleteControl', Obj,
-    function (data, control) {
-        beeCore.mediator.emit(EVENT_BEFORE_REMOVE, this.chrome, control)
+    function (__shared, renderingChrome) {
+        beeCore.mediator.emit(EVENT_BEFORE_REMOVE, this.chrome, renderingChrome)
     },
 
-    function (data, control) {
-        setTimeout(() => mediator.emit(EVENT_REMOVE, this.chrome, control), 250)
+    function (__shared, renderingChrome) {
+        setTimeout(() => mediator.emit(EVENT_REMOVE, this.chrome, renderingChrome), 250)
     }
 );
+
+
+beeCore._registerDOMEvents(EVENT_BEFORE_INSERT, EVENT_INSERT, EVENT_MOVE, EVENT_POP, EVENT_BEFORE_REMOVE, EVENT_REMOVE);
