@@ -68,7 +68,7 @@ override('deleteControl', Obj,
     },
 
     function (__shared, renderingChrome) {
-        setTimeout(() => mediator.emit(EVENT_REMOVE, this.chrome, renderingChrome), 250)
+        setTimeout(() => beeCore.mediator.emit(EVENT_REMOVE, this.chrome, renderingChrome), 250)
     }
 );
 
