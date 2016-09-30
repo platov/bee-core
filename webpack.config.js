@@ -13,19 +13,26 @@ module.exports = {
         libraryTarget: 'umd'
     },
 
+    externals: {
+        jquery: 'jQuery',
+    },
+
     module: {
         loaders: [
             {
                 test   : /\.js$/,
                 include: [path.resolve('src')],
-                loader : 'babel'
+                loader : 'babel',
+                query  : {
+                    presets: ['es2015'],
+                    plugins: ['transform-runtime']
+                }
             }
         ]
     },
 
     plugins: [
         new webpack.optimize.UglifyJsPlugin({
-            exclude  : /node_modules/,
             sourceMap: false,
             compress : {
                 warnings: false

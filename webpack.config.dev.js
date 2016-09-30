@@ -12,12 +12,20 @@ module.exports = {
         libraryTarget: 'umd'
     },
 
+    externals: {
+        jquery: 'jQuery',
+    },
+
     module: {
         loaders: [
             {
                 test   : /\.js$/,
                 include: [path.resolve('src')],
-                loader : 'babel'
+                loader : 'babel',
+                query  : {
+                    presets: ['es2015'],
+                    plugins: ['transform-runtime']
+                }
             }
         ]
     }
