@@ -3,30 +3,34 @@ import $ from 'jquery';
 
 class BeeCore {
     constructor() {
-        var self = this;
+        let self = this, _resolve;
 
         this.isExperienceEditor = false;
         this.mediator = new EventEmitter();
+        this.promise = new Promise(res => _resolve = res);
 
-        (onload => {
-            window.onload = function () {
-                if ('function' === typeof onload) {
-                    onload.apply(window, [...arguments]);
-                }
+        // Wait for DOM loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            this.isExperienceEditor = !!(window.Sitecore && window.Sitecore.WebEditSettings && window.Sitecore.WebEditSettings.editing);
 
-                if (!window.Sitecore || !window.Sitecore.WebEditSettings || !window.Sitecore.WebEditSettings.editing) {
-                    return;
-                }
+            _resolve();
+        }, false);
 
-                self.isExperienceEditor = true;
 
-                require('./chromeTypes');
-
-                self.mediator.emit('beeCore:ready', this);
+        // Wait for window loaded
+        window.addEventListener('load', () => {
+            if (!this.isExperienceEditor) {
+                return;
             }
-        })(window.onload);
+
+            require('./chromeTypes');
+        }, false);
     }
 
+
+    /**
+     * Register events what should be transfered through DOM with jquery
+     * */
     _registerDOMEvents(...events) {
         let self = this;
 
@@ -39,7 +43,7 @@ class BeeCore {
 
             // If no Chrome available - event cannot be fired through DOM
             if (!(chrome instanceof Sitecore.PageModes.Chrome)) {
-                return
+                return;
             }
 
             element = $(chrome.element);
@@ -48,19 +52,21 @@ class BeeCore {
             if ('placeholder' === chrome.type.key()) {
                 //and we have rendering chrome instance
                 if (rest[0].type instanceof Sitecore.PageModes.ChromeTypes.Rendering) {
-                    // Trigger customEvent on rendering DOM element
 
+                    // Trigger customEvent on rendering DOM element
                     $(rest[0].element[0]).trigger(event, [chrome, ...rest]);
 
                 } else {
+
                     // Trigger customEvent on placeholder parent DOM element
                     element.first().parent().trigger(event, [chrome, ...rest]);
+
                 }
             } else if (element.length) {
                 // Trigger customEvent on Chrome DOM element
                 element.trigger(event, [chrome, ...rest]);
             } else {
-                throw `[bee-core] Cannot transfer event ${event} to DOM because of no DOM element spcified.`;
+                throw `[bee-core] Cannot transfer event ${event} on DOM because of no DOM element spcified.`;
             }
         }));
     }
