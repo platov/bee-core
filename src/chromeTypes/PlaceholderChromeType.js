@@ -30,7 +30,9 @@ override('insertRendering', Obj,
         newRenderingUID = el.children[0].id.substring(2);
         renderingChrome = this._getChildRenderingByUid(newRenderingUID);
 
-        setTimeout(() => beeCore.mediator.emit(EVENT_INSERT, this.chrome, renderingChrome, __shared.position), 500);
+        renderingChrome.element.stop(true, true);
+
+        beeCore.mediator.emit(EVENT_INSERT, this.chrome, renderingChrome, __shared.position);
     }
 );
 
