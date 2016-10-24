@@ -77,10 +77,10 @@ class BeeCore {
      * @return {Array} ACT collection
      * */
     generateACT(selector) {
-        let chromeElements,
+        let chromes,
+            root,
             DOM,
-            flattenChromeElements = [],
-            result,
+
             _level = 0;
 
         const OPEN = `[kind='open']`;
@@ -89,92 +89,144 @@ class BeeCore {
         const RENDERING = `code[chrometype='rendering']`;
         const CHROME_SELECTOR = `${PLACEHOLDER}${OPEN}, ${RENDERING}${OPEN}, ${PLACEHOLDER}${CLOSE}, ${RENDERING}${CLOSE}`;
 
-        result = {
-            type: 'root'
-        };
-
         if ('development' === process.env.NODE_ENV) {
             console.time('ACT generated');
         }
 
-        DOM = $($(selector)[0].outerHTML);
-        chromeElements = DOM.find(CHROME_SELECTOR);
+        root = {type: 'root'};
 
-        if (!chromeElements.length) {
-            return result;
+        DOM = $($(selector)[0].outerHTML);
+
+        chromes = generateFlattenChromeList(DOM);
+
+        if(!chromes.length) {
+            return;
         }
 
-        // Generate flatten list of open/close chrome rags
-        chromeElements.each(function () {
-            let el = $(this),
-                isPlaceholder = false,
-                isRendering = false;
+        fattenListToACT(chromes, root);
 
-            if (el.is(OPEN)) {
-                _level++;
-            } else if (el.is(CLOSE)) {
-                _level--;
-                return;
-            }
-
-            if (el.is(PLACEHOLDER)) {
-                isPlaceholder = true;
-            } else if (el.is(RENDERING)) {
-                isRendering = true;
-            }
-
-            if (isPlaceholder || isRendering) {
-                flattenChromeElements.push({
-                    level  : _level,
-                    type   : isPlaceholder ? 'placeholder' : 'rendering',
-                    id     : el.attr('id'),
-                    openTag: el
-                });
-            }
-        });
-
-        // Convert flatten chrome elements list to Abstract Components Tree
-        (function loop(collection, scopeLevel) {
-            let chrome = flattenChromeElements.shift(),
-                scopeCollection = [],
-                result;
-
-            result = {
-                id        : chrome.id,
-                type      : chrome.type,
-                renderings: scopeCollection
-            };
-
-            // Push me to the scope collection;
-            if (collection instanceof Array) {
-                collection.push(result);
-            } else {
-                collection[chrome.id] = result;
-            }
-
-
-            // If next item is child - open new scope
-            if (flattenChromeElements.length && flattenChromeElements[0].level > scopeLevel) {
-                loop(chrome.type === 'placeholder' ? scopeCollection : result, scopeLevel + 1); // jump in
-            }
-
-            result.template = getTemplate(chrome);
-
-            // Go to next sibling
-            if (flattenChromeElements.length && flattenChromeElements[0].level === scopeLevel) {
-                loop(collection, scopeLevel);
-            }
-        })(result, 1);
-
-        // Get root template
-        result.template = DOM[0].outerHTML;
+        root.template = DOM[0].outerHTML;
 
         if ('development' === process.env.NODE_ENV) {
             console.timeEnd('ACT generated');
         }
 
-        return result;
+        return root;
 
+
+        /**
+         * Generate flatten list of open/close chrome rags
+         *
+         * @param {jQuery} DOM
+         *
+         * @return {Array} Chromes list
+         * */
+        function generateFlattenChromeList(DOM) {
+            let result = [],
+                chromeElements = DOM.find(CHROME_SELECTOR);
+
+            if (!chromeElements.length) {
+                return result;
+            }
+
+            chromeElements.each(function () {
+                let el = $(this),
+                    type,
+                    isMatching;
+
+                if (el.is(OPEN)) {
+                    _level++;
+                } else if (el.is(CLOSE)) {
+                    _level--;
+                    return;
+                }
+
+                type = resolveChromeType(el);
+                isMatching = ['rendering', 'placeholder'].indexOf(type) > -1;
+
+                if (isMatching) {
+                    result.push({
+                        level  : _level,
+                        type   : type,
+                        id     : el.attr('id'),
+                        openTag: el
+                    });
+                }
+            });
+
+            return result;
+        }
+
+
+        /**
+         * Convert flatten chrome elements list to Abstract Components Tree
+         *
+         * @param {Array<Object>} chromeElements    Flatten list of chrome objects
+         * @param {object} data                     ACT Root object
+         *
+         * @void
+         * */
+        function fattenListToACT(chromeElements, data) {
+            (function loop(collection, scopeLevel) {
+                let chrome = chromeElements.shift(),
+                    scopeCollection = [],
+                    result;
+
+                result = {
+                    id        : chrome.id,
+                    type      : chrome.type
+                };
+
+                if('placeholder' === chrome.type) {
+                    result.renderings = scopeCollection;
+                }
+
+                // Push me to the scope collection;
+                if (collection instanceof Array) {
+                    collection.push(result);
+                } else {
+                    collection[chrome.id] = result;
+                }
+
+
+                // If next item is child - open new scope
+                if (chromeElements.length && chromeElements[0].level > scopeLevel) {
+                    loop(chrome.type === 'placeholder' ? scopeCollection : result, scopeLevel + 1); // jump in
+                }
+
+                result.template = getTemplate(chrome);
+
+                // Go to next sibling
+                if (chromeElements.length && chromeElements[0].level === scopeLevel) {
+                    loop(collection, scopeLevel);
+                }
+            })(data, 1);
+        }
+
+
+        /**
+         * Resolve type of chrome element
+         *
+         * @param {HTMLElement} el
+         *
+         * @return {string}     Chrome type
+         * */
+        function resolveChromeType(el) {
+            if (el.is(PLACEHOLDER)) {
+                return 'placeholder';
+            } else if (el.is(RENDERING)) {
+                return 'rendering';
+            }
+        }
+
+
+        /**
+         * Get HTML template string of related Chrome
+         *
+         * @param {object} chrome
+         *
+         * @return {string} Template string
+         * */
         function getTemplate(chrome) {
             let openTag, closeTag, content, phantom;
 
