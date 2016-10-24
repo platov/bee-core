@@ -35,7 +35,7 @@ class BeeCore {
 
 
     /**
-     * Register events what should be transfered through DOM with jquery
+     * Register events what should be transferred through DOM with jquery
      * */
     _registerDOMEvents(...events) {
         if (!$) {
@@ -70,7 +70,7 @@ class BeeCore {
                 // Trigger customEvent on Chrome DOM element
                 element.trigger(event, [chrome, ...rest]);
             } else {
-                throw `[bee-core] Cannot transfer event ${event} on DOM because of no DOM element spcified.`;
+                throw `[bee-core] Cannot transfer event ${event} on DOM because of no DOM element specified.`;
             }
         }));
     }
@@ -78,7 +78,7 @@ class BeeCore {
     /**
      * Generate Abstract Components tree
      *
-     * @return {Array} ACT collection
+     * @return {Object}
      * */
     generateACT(selector) {
         const OPEN = `[kind='open']`;
@@ -118,14 +118,21 @@ class BeeCore {
         return root;
 
 
-        function cloneDOM(selctor) {
-            let rootElement = document.querySelector(selector);
+        /**
+         * Clone HTML Element
+         *
+         * @param {string} selector
+         *
+         * @return {HTMLElement}
+         * */
+        function cloneDOM(selector) {
+            let el = document.querySelector(selector);
 
-            if (!rootElement) {
+            if (!el) {
                 throw `[beeCore] Cannot find element with selector "${selector}"`;
             }
 
-            return rootElement.cloneNode(true);
+            return el.cloneNode(true);
         }
 
 
@@ -239,7 +246,7 @@ class BeeCore {
          *
          * @param {object} chrome
          *
-         * @return {string} Template string
+         * @return {string}     Template string
          * */
         function getTemplate(chrome) {
             let openTag, closeTag, content, phantom, temp;
