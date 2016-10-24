@@ -76,23 +76,29 @@ class BeeCore {
      *
      * @return {Array} ACT collection
      * */
-    generateACT() {
+    generateACT(selector) {
         let chromeElements,
+            DOM,
             flattenChromeElements = [],
-            result = [],
+            result,
             _level = 0;
 
         const OPEN = `[kind='open']`;
         const CLOSE = `[kind='close']`;
         const PLACEHOLDER = `code[chrometype='placeholder']`;
         const RENDERING = `code[chrometype='rendering']`;
-        const SELECTOR = `${PLACEHOLDER}${OPEN}, ${RENDERING}${OPEN}, ${PLACEHOLDER}${CLOSE}, ${RENDERING}${CLOSE}`;
+        const CHROME_SELECTOR = `${PLACEHOLDER}${OPEN}, ${RENDERING}${OPEN}, ${PLACEHOLDER}${CLOSE}, ${RENDERING}${CLOSE}`;
+
+        result = {
+            type: 'root'
+        };
 
         if ('development' === process.env.NODE_ENV) {
             console.time('ACT generated');
         }
 
-        chromeElements = $(document.body).find(SELECTOR);
+        DOM = $($(selector)[0].outerHTML);
+        chromeElements = DOM.find(CHROME_SELECTOR);
 
         if (!chromeElements.length) {
             return result;
@@ -119,10 +125,10 @@ class BeeCore {
 
             if (isPlaceholder || isRendering) {
                 flattenChromeElements.push({
-                    level : _level,
-                    type  : isPlaceholder ? 'placeholder' : 'rendering',
-                    title : el.attr(isPlaceholder ? 'key' : 'hintname'),
-                    chrome: el[0]
+                    level  : _level,
+                    type   : isPlaceholder ? 'placeholder' : 'rendering',
+                    id     : el.attr('id'),
+                    openTag: el
                 });
             }
         });
@@ -130,17 +136,29 @@ class BeeCore {
         // Convert flatten chrome elements list to Abstract Components Tree
         (function loop(collection, scopeLevel) {
             let chrome = flattenChromeElements.shift(),
-                scopeCollection;
+                scopeCollection = [],
+                result;
 
-            chrome.children = scopeCollection = [];
+            result = {
+                id        : chrome.id,
+                type      : chrome.type,
+                renderings: scopeCollection
+            };
 
             // Push me to the scope collection;
-            collection.push(chrome);
+            if (collection instanceof Array) {
+                collection.push(result);
+            } else {
+                collection[chrome.id] = result;
+            }
+
 
             // If next item is child - open new scope
             if (flattenChromeElements.length && flattenChromeElements[0].level > scopeLevel) {
-                loop(scopeCollection, scopeLevel + 1); // jump in
+                loop(chrome.type === 'placeholder' ? scopeCollection : result, scopeLevel + 1); // jump in
             }
+
+            result.template = getTemplate(chrome);
 
             // Go to next sibling
             if (flattenChromeElements.length && flattenChromeElements[0].level === scopeLevel) {
@@ -148,11 +166,29 @@ class BeeCore {
             }
         })(result, 1);
 
+        // Get root template
+        result.template = DOM[0].outerHTML;
+
         if ('development' === process.env.NODE_ENV) {
             console.timeEnd('ACT generated');
         }
 
         return result;
+
+        function getTemplate(chrome) {
+            let openTag, closeTag, content, phantom;
+
+            openTag = chrome.openTag;
+            closeTag = openTag.nextAll(`${chrome.type === 'placeholder' ? PLACEHOLDER : RENDERING}${CLOSE}:first`);
+            content = openTag.nextUntil(closeTag);
+
+            if ('rendering' !== chrome.type) {
+                phantom = `<ee-phantom-placeholder :data="${chrome.id}"></ee-phantom-placeholder>`;
+                openTag.before(phantom);
+            }
+
+            return $('<div />').append([openTag, content, closeTag]).html();
+        }
     }
 }
 
