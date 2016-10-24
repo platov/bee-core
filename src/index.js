@@ -1,5 +1,11 @@
 import EventEmitter from 'eventemitter3';
 import $ from 'jquery';
+import _ from "lodash/wrapperLodash";
+import mixin from 'lodash/mixin';
+import flattenDeep from 'lodash/flattenDeep';
+
+mixin(_, {flattenDeep, mixin});
+
 
 class BeeCore {
     constructor() {
@@ -32,8 +38,6 @@ class BeeCore {
      * Register events what should be transfered through DOM with jquery
      * */
     _registerDOMEvents(...events) {
-        let self = this;
-
         if (!$) {
             return;
         }
@@ -77,17 +81,17 @@ class BeeCore {
      * @return {Array} ACT collection
      * */
     generateACT(selector) {
-        let chromes,
-            root,
-            DOM,
-
-            _level = 0;
-
         const OPEN = `[kind='open']`;
         const CLOSE = `[kind='close']`;
         const PLACEHOLDER = `code[chrometype='placeholder']`;
         const RENDERING = `code[chrometype='rendering']`;
         const CHROME_SELECTOR = `${PLACEHOLDER}${OPEN}, ${RENDERING}${OPEN}, ${PLACEHOLDER}${CLOSE}, ${RENDERING}${CLOSE}`;
+
+        let chromes,
+            root,
+            DOM,
+
+            _level = 0;
 
         if ('development' === process.env.NODE_ENV) {
             console.time('ACT generated');
@@ -95,23 +99,34 @@ class BeeCore {
 
         root = {type: 'root'};
 
-        DOM = $($(selector)[0].outerHTML);
+        DOM = cloneDOM(selector);
 
         chromes = generateFlattenChromeList(DOM);
 
-        if(!chromes.length) {
+        if (!chromes.length) {
             return;
         }
 
-        fattenListToACT(chromes, root);
+        flattenListToACT(chromes, root);
 
-        root.template = DOM[0].outerHTML;
+        root.template = DOM.outerHTML;
 
         if ('development' === process.env.NODE_ENV) {
             console.timeEnd('ACT generated');
         }
 
         return root;
+
+
+        function cloneDOM(selctor) {
+            let rootElement = document.querySelector(selector);
+
+            if (!rootElement) {
+                throw `[beeCore] Cannot find element with selector "${selector}"`;
+            }
+
+            return rootElement.cloneNode(true);
+        }
 
 
         /**
@@ -123,20 +138,19 @@ class BeeCore {
          * */
         function generateFlattenChromeList(DOM) {
             let result = [],
-                chromeElements = DOM.find(CHROME_SELECTOR);
+                chromeElements = DOM.querySelectorAll(CHROME_SELECTOR);
 
             if (!chromeElements.length) {
                 return result;
             }
 
-            chromeElements.each(function () {
-                let el = $(this),
-                    type,
+            Array.prototype.forEach.call(chromeElements, function (el) {
+                let type,
                     isMatching;
 
-                if (el.is(OPEN)) {
+                if (matchesSelector(el, OPEN)) {
                     _level++;
-                } else if (el.is(CLOSE)) {
+                } else if (matchesSelector(el, CLOSE)) {
                     _level--;
                     return;
                 }
@@ -148,7 +162,7 @@ class BeeCore {
                     result.push({
                         level  : _level,
                         type   : type,
-                        id     : el.attr('id'),
+                        id     : el.id,
                         openTag: el
                     });
                 }
@@ -166,18 +180,18 @@ class BeeCore {
          *
          * @void
          * */
-        function fattenListToACT(chromeElements, data) {
+        function flattenListToACT(chromeElements, data) {
             (function loop(collection, scopeLevel) {
                 let chrome = chromeElements.shift(),
                     scopeCollection = [],
                     result;
 
                 result = {
-                    id        : chrome.id,
-                    type      : chrome.type
+                    id  : chrome.id,
+                    type: chrome.type
                 };
 
-                if('placeholder' === chrome.type) {
+                if ('placeholder' === chrome.type) {
                     result.renderings = scopeCollection;
                 }
 
@@ -212,9 +226,9 @@ class BeeCore {
          * @return {string}     Chrome type
          * */
         function resolveChromeType(el) {
-            if (el.is(PLACEHOLDER)) {
+            if (matchesSelector(el, PLACEHOLDER)) {
                 return 'placeholder';
-            } else if (el.is(RENDERING)) {
+            } else if (matchesSelector(el, RENDERING)) {
                 return 'rendering';
             }
         }
@@ -228,18 +242,108 @@ class BeeCore {
          * @return {string} Template string
          * */
         function getTemplate(chrome) {
-            let openTag, closeTag, content, phantom;
+            let openTag, closeTag, content, phantom, temp;
 
             openTag = chrome.openTag;
-            closeTag = openTag.nextAll(`${chrome.type === 'placeholder' ? PLACEHOLDER : RENDERING}${CLOSE}:first`);
-            content = openTag.nextUntil(closeTag);
+            closeTag = findNext(openTag, `${chrome.type === 'placeholder' ? PLACEHOLDER : RENDERING}${CLOSE}`);
+            content = nextUntil(openTag, closeTag);
 
             if ('rendering' !== chrome.type) {
-                phantom = `<ee-phantom-placeholder :data="${chrome.id}"></ee-phantom-placeholder>`;
-                openTag.before(phantom);
+                phantom = evalHTML(`<ee-phantom-placeholder :data="${chrome.id}"></ee-phantom-placeholder>`);
+                openTag.parentElement.insertBefore(phantom, openTag);
             }
 
-            return $('<div />').append([openTag, content, closeTag]).html();
+            temp = evalHTML('<div />');
+
+            _.flattenDeep([openTag, content, closeTag]).forEach(el => temp.appendChild(el));
+
+            return temp.innerHTML;
+        }
+
+
+        /**
+         * Evaluate HTML string to live DOM
+         *
+         * @param {string} data     html string
+         *
+         * @return {HTMLElement | Array<HTMLElement>}
+         * */
+        function evalHTML(data) {
+            let temp = document.createElement('div');
+
+            temp.innerHTML = data;
+
+            return temp.childNodes.length > 1 ? temp.childNodes : temp.firstChild;
+        }
+
+
+        /**
+         * Check is selector matches to provided element
+         *
+         * @param {HTMLElement} el
+         *
+         * @param {string | HTMLElement} selector
+         * */
+        function matchesSelector(el, selector) {
+            let fn = Element.prototype.matchesSelector ||
+                Element.prototype.mozMatchesSelector ||
+                Element.prototype.msMatchesSelector ||
+                Element.prototype.oMatchesSelector ||
+                Element.prototype.webkitMatchesSelector;
+
+            matchesSelector = function (el, selector) {
+                if (el.nodeType !== 1) {
+                    return false;
+                }
+
+                return 'object' === typeof selector
+                    ? el === selector
+                    : fn.call(el, selector);
+            };
+
+            return matchesSelector.apply(null, arguments);
+        }
+
+
+        /**
+         * Get next sibling nodes until element with matched selector
+         *
+         * @param {HTMLElement} el                  Start element
+         * @param {string | HTMLElement} selector   Selector of End element
+         *
+         * @return {Array<HTMLElement>}
+         * */
+        function nextUntil(el, selector) {
+            let result = [];
+
+            while (el = el.nextSibling) {
+                if (matchesSelector(el, selector)) {
+                    break;
+                }
+
+                result.push(el);
+            }
+
+            return result;
+        }
+
+
+        /**
+         * Find first matched sibling after provided element
+         *
+         * @param {HTMLElement} el
+         * @param {string|HTMLElement} selector
+         *
+         * @return {HTMLElement | null}
+         * */
+        function findNext(el, selector) {
+            while (el = el.nextSibling) {
+                if (matchesSelector(el, selector)) {
+                    return el;
+                }
+            }
+
+            return null;
         }
     }
 }
