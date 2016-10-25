@@ -215,7 +215,9 @@ class BeeCore {
                     loop(chrome.type === 'placeholder' ? scopeCollection : result, scopeLevel + 1); // jump in
                 }
 
-                result.template = getTemplate(chrome);
+                result.openTag = chrome.openTag;
+                result.closeTag = findNext(chrome.openTag, `${chrome.type === 'placeholder' ? PLACEHOLDER : RENDERING}${CLOSE}`);
+                result.template = getTemplate(result);
 
                 // Go to next sibling
                 if (chromeElements.length && chromeElements[0].level === scopeLevel) {
@@ -249,20 +251,27 @@ class BeeCore {
          * @return {string}     Template string
          * */
         function getTemplate(chrome) {
-            let openTag, closeTag, content, phantom, temp;
+            let content, phantom, temp, parentElement;
 
-            openTag = chrome.openTag;
-            closeTag = findNext(openTag, `${chrome.type === 'placeholder' ? PLACEHOLDER : RENDERING}${CLOSE}`);
-            content = nextUntil(openTag, closeTag);
-
-            if ('rendering' !== chrome.type) {
-                phantom = evalHTML(`<ee-phantom-placeholder :data="${chrome.id}"></ee-phantom-placeholder>`);
-                openTag.parentElement.insertBefore(phantom, openTag);
-            }
-
+            content = nextUntil(chrome.openTag, chrome.closeTag);
             temp = evalHTML('<div />');
 
-            _.flattenDeep([openTag, content, closeTag]).forEach(el => temp.appendChild(el));
+            if ('placeholder' === chrome.type) {
+                parentElement = chrome.openTag.parentElement;
+                phantom = evalHTML(`<ee-phantom-placeholder :link="'${chrome.id}'"></ee-phantom-placeholder>`);
+                parentElement.parentElement.insertBefore(phantom, parentElement);
+
+                parentElement.appendChild(evalHTML(`<template v-for="rendering in data.renderings"><ee-phantom-rendering :data="rendering"></ee-phantom-rendering></template>`));
+
+                content = [parentElement]
+            }
+
+            // Detach chrome tags
+            document.createDocumentFragment().appendChild(chrome.openTag);
+            document.createDocumentFragment().appendChild(chrome.closeTag);
+
+            //_.flattenDeep([openTag, content, closeTag]).forEach(el => temp.appendChild(el));
+            content.forEach(el => temp.appendChild(el));
 
             return temp.innerHTML;
         }
