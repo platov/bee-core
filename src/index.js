@@ -251,27 +251,40 @@ class BeeCore {
          * @return {string}     Template string
          * */
         function getTemplate(chrome) {
-            let content, phantom, temp, parentElement;
+            let openTag, closeTag, content, phantom, temp, parentElement;
 
-            content = nextUntil(chrome.openTag, chrome.closeTag);
+            openTag = chrome.openTag;
+            closeTag = chrome.closeTag;
             temp = evalHTML('<div />');
 
             if ('placeholder' === chrome.type) {
-                parentElement = chrome.openTag.parentElement;
-                phantom = evalHTML(`<ee-phantom-placeholder :link="'${chrome.id}'"></ee-phantom-placeholder>`);
-                parentElement.parentElement.insertBefore(phantom, parentElement);
+                let placeholderElem = chrome.openTag.parentElement;
 
-                parentElement.appendChild(evalHTML(`<template v-for="rendering in data.renderings"><ee-phantom-rendering :data="rendering"></ee-phantom-rendering></template>`));
+                detach(openTag);
+                detach(closeTag);
 
-                content = [parentElement]
+                placeholderElem.parentElement.insertBefore(evalHTML(`<ee-phantom-placeholder :link="'${chrome.id}'"></ee-phantom-placeholder>`), placeholderElem);
+
+                placeholderElem.appendChild(evalHTML(`<ee-phantom-rendering v-for="rendering in data.renderings" :key="rendering.id" :data="rendering"></ee-phantom-rendering>`));
+                placeholderElem.appendChild(closeTag);
+                placeholderElem.insertBefore(openTag, placeholderElem.children[0]);
+
+                temp.appendChild(placeholderElem);
+            } else if ('rendering' === chrome.type) {
+                let content = nextUntil(openTag, closeTag);
+
+                detach(openTag);
+                detach(closeTag);
+
+                content.forEach(el => temp.appendChild(el));
             }
 
             // Detach chrome tags
-            document.createDocumentFragment().appendChild(chrome.openTag);
-            document.createDocumentFragment().appendChild(chrome.closeTag);
+            //document.createDocumentFragment().appendChild(chrome.openTag);
+            //document.createDocumentFragment().appendChild(chrome.closeTag);
 
             //_.flattenDeep([openTag, content, closeTag]).forEach(el => temp.appendChild(el));
-            content.forEach(el => temp.appendChild(el));
+            //content.forEach(el => temp.appendChild(el));
 
             return temp.innerHTML;
         }
@@ -326,13 +339,18 @@ class BeeCore {
          *
          * @param {HTMLElement} el                  Start element
          * @param {string | HTMLElement} selector   Selector of End element
+         * @param {boolean} onlyElements            Match only Nodes with type === 1 (element)
          *
          * @return {Array<HTMLElement>}
          * */
-        function nextUntil(el, selector) {
+        function nextUntil(el, selector, onlyElements) {
             let result = [];
 
             while (el = el.nextSibling) {
+                if (onlyElements && el.nodeType !== 1) {
+                    continue;
+                }
+
                 if (matchesSelector(el, selector)) {
                     break;
                 }
@@ -360,6 +378,14 @@ class BeeCore {
             }
 
             return null;
+        }
+
+        function detach(el) {
+            let fragment = document.createDocumentFragment();
+
+            fragment.appendChild(el);
+
+            return el;
         }
     }
 }
