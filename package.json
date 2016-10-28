@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "eventemitter3": ">=1.0.0",
+    "jquery": ">=2.1.0",
     "lodash": ">=4.0.0"
   }
 }

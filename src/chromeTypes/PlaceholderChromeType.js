@@ -15,10 +15,10 @@ let Obj = Sitecore.PageModes.ChromeTypes.Placeholder.prototype;
  * Handle Insert behavior on rendering creation
  * */
 override('insertRendering', Obj,
-    function (__shared) {
+    function (__shared, data) {
         __shared.position = this._insertPosition;
 
-        beeCore.mediator.emit(EVENT_BEFORE_INSERT, this.chrome, __shared.position);
+        beeCore.mediator.emit(EVENT_BEFORE_INSERT, this.chrome, __shared.position, data.html);
     },
 
     function (__shared, data) {
