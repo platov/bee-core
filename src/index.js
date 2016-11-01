@@ -49,7 +49,14 @@ class BeeCore {
                 return;
             }
 
-            element = $(chrome.element);
+            if(chrome.element.length) {
+                element = $(chrome.element);
+            } else if (chrome.__element && chrome.__element.length) {
+                element = $(chrome.__element);
+            } else {
+                return;
+            }
+
 
             // If event from placeholder
             if ('placeholder' === chrome.type.key()) {

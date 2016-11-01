@@ -66,13 +66,13 @@ override(
 /**
  * Handle Remove Rendering behavior
  * */
-override('deleteControl', Obj,
+override('_removeRendering', Obj,
     function (__shared, renderingChrome) {
-        beeCore.mediator.emit(EVENT_BEFORE_REMOVE, this.chrome, renderingChrome)
+        beeCore.mediator.emit(EVENT_BEFORE_REMOVE, this.chrome, renderingChrome);
     },
 
     function (__shared, renderingChrome) {
-        setTimeout(() => beeCore.mediator.emit(EVENT_REMOVE, this.chrome, renderingChrome), 250)
+        beeCore.mediator.emit(EVENT_REMOVE, this.chrome, renderingChrome);
     }
 );
 
