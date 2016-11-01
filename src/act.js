@@ -43,7 +43,9 @@ class ACT {
     }
 
     generate(element) {
-        let flatChromesList, clonedHTML, tree = {};
+        let flatChromesList,
+            clonedHTML,
+            tree = {renderings: []};
 
         if ('development' === process.env.NODE_ENV) {
             console.time('ACT generated');
@@ -53,7 +55,7 @@ class ACT {
 
         flatChromesList = ACT.generateFlatChromeList(clonedHTML);
 
-        ACT.flatListToACT(tree, flatChromesList, this.placeholderTemplate, this.renderingTemplate);
+        this.flatListToACT(tree, flatChromesList, this.placeholderTemplate, this.renderingTemplate);
 
         tree.template = clonedHTML.outerHTML;
 
@@ -142,61 +144,53 @@ class ACT {
      *
      * @param {Object} root                             Root object
      * @param {Array<FlatChromeDTO>} chromeElements     Flat list of chrome objects
-     * @param {Function} placeholderTemplate            Placeholder Template function
-     * @param {Function} renderingTemplate              rendering Template function
      *
      * @void
      * */
-    static flatListToACT(root, chromeElements, placeholderTemplate, renderingTemplate) {
-        loop(root, 1);
+    flatListToACT(root, chromeElements) {
+        loop.call(this, root, 1);
 
         /**
-         * @param {Array<ChromeDTO>} collection
+         * @param {ChromeDTO} scope
          * @param {Number} scopeLevel
          * */
-        function loop(collection, scopeLevel) {
+        function loop(scope, scopeLevel) {
             /** @type {FlatChromeDTO} */
             let chrome = chromeElements.shift();
-
-            /** @type {Array<ChromeDTO>} */
-            let scopeCollection = [];
 
             /** @type {ChromeDTO} */
             let result = {
                 id     : chrome.id,
                 type   : chrome.type,
-                openTag: chrome.openTag,
+                openTag: chrome.openTag
             };
 
             const CLOSE_TAG_SELECTOR = chrome.type === 'placeholder'
                 ? PLACEHOLDER_SELECTOR : RENDERING_SELECTOR + CLOSE_SELECTOR;
 
             if ('placeholder' === chrome.type) {
-                result.renderings = scopeCollection;
+                result.renderings = [];
             }
 
             // Assign to the scope
-            if (collection instanceof Array) {
-                collection.push(result);
+            if ('rendering' === chrome.type) {
+                scope.renderings.push(result);
             } else {
-                collection[chrome.id] = result;
+                scope[chrome.id] = result;
             }
 
             // If next item is child - open new scope
             if (chromeElements.length && chromeElements[0].level > scopeLevel) {
                 // jump in
-                loop(
-                    chrome.type === 'placeholder' ? scopeCollection : result,
-                    scopeLevel + 1
-                );
+                loop.call(this, result, scopeLevel + 1);
             }
 
             result.closeTag = dom.nextMatch(chrome.openTag, CLOSE_TAG_SELECTOR);
-            result.template = ACT.extractTemplate(result, placeholderTemplate, renderingTemplate);
+            result.template = this.extractTemplate(result);
 
             // Go to next sibling
             if (chromeElements.length && chromeElements[0].level === scopeLevel) {
-                loop(collection, scopeLevel);
+                loop.call(this, scope, scopeLevel);
             }
         }
     }
@@ -206,21 +200,19 @@ class ACT {
      * Extract html string for provided ChromeDTO
      *
      * @param {ChromeDTO} chrome
-     * @param {Function} placeholderTemplate    Placeholder Template function
-     * @param {Function} renderingTemplate      rendering Template function
      *
      * @return {string} Template string
      * */
-    static extractTemplate(chrome, placeholderTemplate, renderingTemplate) {
+    extractTemplate(chrome) {
         switch (chrome.type) {
             case 'placeholder':
-                return ACT.extractPlaceholderTemplate(chrome, placeholderTemplate, renderingTemplate);
+                return this.extractPlaceholderTemplate(chrome);
             case 'rendering':
-                return ACT.extractRenderingTemplate(chrome);
+                return this.extractRenderingTemplate(chrome);
         }
     }
 
-    static extractPlaceholderTemplate(chrome, placeholderTemplate, renderingTemplate) {
+    extractPlaceholderTemplate(chrome) {
         /** @type {HTMLElement} */
         let temp = dom.eval('<div />');
 
@@ -228,10 +220,10 @@ class ACT {
         let placeholderElem = chrome.openTag.parentElement;
 
         /** @type {HTMLElement} */
-        let placeholderComponent = dom.eval(placeholderTemplate(chrome));
+        let placeholderComponent = dom.eval(this.placeholderTemplate(chrome));
 
         /** @type {HTMLElement} */
-        let renderingComponentTag = dom.eval(renderingTemplate(chrome));
+        let renderingComponentTag = dom.eval(this.renderingTemplate(chrome));
 
 
         dom.detach(chrome.openTag);
@@ -239,8 +231,6 @@ class ACT {
 
         placeholderElem.parentElement.insertBefore(placeholderComponent, placeholderElem);
         placeholderElem.appendChild(renderingComponentTag);
-        placeholderElem.appendChild(chrome.closeTag);
-        placeholderElem.insertBefore(chrome.openTag, placeholderElem.children[0]);
 
         temp.appendChild(placeholderElem);
 
@@ -248,7 +238,7 @@ class ACT {
         return temp.innerHTML;
     }
 
-    static extractRenderingTemplate(chrome) {
+    extractRenderingTemplate(chrome) {
         /** @type {HTMLElement} */
         let temp = dom.eval('<div />');
 

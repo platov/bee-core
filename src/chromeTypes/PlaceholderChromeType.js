@@ -4,6 +4,7 @@ import beeCore from '../';
 const EVENT_PREFIX = `placeholder:`;
 const EVENT_BEFORE_INSERT = `${EVENT_PREFIX}before-insertRendering`;
 const EVENT_INSERT = `${EVENT_PREFIX}insertRendering`;
+const EVENT_BEFORE_MOVE = `${EVENT_PREFIX}before-moveRendering`;
 const EVENT_MOVE = `${EVENT_PREFIX}moveRendering`;
 const EVENT_POP = `${EVENT_PREFIX}popRendering`;
 const EVENT_BEFORE_REMOVE = `${EVENT_PREFIX}before-removeRendering`;
@@ -18,7 +19,7 @@ override('insertRendering', Obj,
     function (__shared, data) {
         __shared.position = this._insertPosition;
 
-        beeCore.mediator.emit(EVENT_BEFORE_INSERT, this.chrome, __shared.position, data.html);
+        beeCore.mediator.emit(EVENT_BEFORE_INSERT, this.chrome, data.html, __shared.position);
     },
 
     function (__shared, data) {
@@ -46,16 +47,17 @@ override(
         __shared.oldPlaceholder = renderingChrome.type.getPlaceholder();
         __shared.newPlaceholder = this.chrome;
 
-        if (__shared.oldPlaceholder !== __shared.newPlaceholder) {
-            beeCore.mediator.emit(EVENT_POP, __shared.oldPlaceholder, renderingChrome);
+        if (__shared.oldPlaceholder === __shared.newPlaceholder) {
+            beeCore.mediator.emit(EVENT_BEFORE_MOVE, this.chrome, renderingChrome, position);
         }
     },
 
     function (__shared, renderingChrome, position) {
-        if (__shared.oldPlaceholder !== __shared.newPlaceholder) {
-            beeCore.mediator.emit(EVENT_INSERT, this.chrome, renderingChrome, position);
-        } else {
+        if (__shared.oldPlaceholder === __shared.newPlaceholder) {
             beeCore.mediator.emit(EVENT_MOVE, this.chrome, renderingChrome, position);
+        } else {
+            beeCore.mediator.emit(EVENT_POP, __shared.oldPlaceholder, renderingChrome);
+            beeCore.mediator.emit(EVENT_INSERT, this.chrome, renderingChrome, position);
         }
     }
 );
