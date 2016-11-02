@@ -146,6 +146,18 @@ let domUtils = {
 
         return el;
     },
+
+    /**
+     * Insert before
+     *
+     * @param {HTMLElement} targetEl
+     * @param {HTMLElement} el
+     *
+     * @void
+     * */
+    insertBefore(targetEl, el){
+        targetEl.parentElement.insertBefore(el, targetEl);
+    }
 };
 
 export default domUtils;

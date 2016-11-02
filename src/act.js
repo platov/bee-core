@@ -7,7 +7,8 @@
  *
  * @property {String}       id
  * @property {string}       type
- * @property {HTMLElement}  openTag
+ * @property {HTMLElement}  [openTag]
+ * @property {HTMLElement}  [tag]
  * @property {number}       level
  * */
 
@@ -19,8 +20,9 @@
  *
  * @property {String}           id
  * @property {String}           type
- * @property {HTMLElement}      openTag
- * @property {HTMLElement}      closeTag
+ * @property {HTMLElement}      [openTag]
+ * @property {HTMLElement}      [closeTag]
+ * @property {HTMLElement}      [tag]
  * @property {String}           template
  * @property {Array<ChromeDTO>} [renderings]
  * */
@@ -31,7 +33,9 @@ const OPEN_SELECTOR = `[kind='open']`;
 const CLOSE_SELECTOR = `[kind='close']`;
 const PLACEHOLDER_SELECTOR = `code[chrometype='placeholder']`;
 const RENDERING_SELECTOR = `code[chrometype='rendering']`;
-const CHROME_SELECTOR = `${PLACEHOLDER_SELECTOR}${OPEN_SELECTOR}, ${RENDERING_SELECTOR}${OPEN_SELECTOR}, ${PLACEHOLDER_SELECTOR}${CLOSE_SELECTOR}, ${RENDERING_SELECTOR}${CLOSE_SELECTOR}`;
+const FIELD_SELECTOR = `.scWebEditInput`;
+const CHROME_SELECTOR = `${PLACEHOLDER_SELECTOR}${OPEN_SELECTOR}, ${RENDERING_SELECTOR}${OPEN_SELECTOR}, 
+            ${PLACEHOLDER_SELECTOR}${CLOSE_SELECTOR}, ${RENDERING_SELECTOR}${CLOSE_SELECTOR}, ${FIELD_SELECTOR}`;
 
 /**
  * Abstract Components Tree Class
@@ -40,6 +44,7 @@ class ACT {
     constructor(options) {
         this.placeholderTemplate = options.placeholderTemplate;
         this.renderingTemplate = options.renderingTemplate;
+        this.fieldTemplate = options.fieldTemplate;
     }
 
     generate(element) {
@@ -79,6 +84,10 @@ class ACT {
             return 'placeholder';
         } else if (dom.is(el, RENDERING_SELECTOR)) {
             return 'rendering';
+        } else if (dom.is(el, FIELD_SELECTOR)) {
+            return 'field';
+        } else {
+            throw '[bee-core/ACT] Cannot resolve element chrome type';
         }
     }
 
@@ -107,31 +116,29 @@ class ACT {
             /** @type {String} */
             let type;
 
-            /** @type {Boolean} */
-            let isMatching;
+            type = ACT.getElementChromeType(el);
 
-
-            if (dom.is(el, OPEN_SELECTOR)) {
-                level++;
-            } else if (dom.is(el, CLOSE_SELECTOR)) {
+            if (dom.is(el, CLOSE_SELECTOR)) {
                 level--;
                 return;
-            } else {
-                throw '[bee-core/ACT] Incorrect type of Chrome element';
             }
 
-            type = ACT.getElementChromeType(el);
-            isMatching = ['rendering', 'placeholder'].indexOf(type) > -1;
+            if ('field' === type) {
+                result.push(/** @type FlatChromeDTO */{
+                    id   : el.id.replace('_edit', ''),
+                    tag  : el,
+                    level: level + 1,
+                    type
+                });
 
-            if (!isMatching) {
                 return;
             }
 
             result.push(/** @type FlatChromeDTO */{
                 id     : el.id,
                 openTag: el,
-                type,
-                level
+                level  : ++level,
+                type
             });
         });
 
@@ -160,13 +167,18 @@ class ACT {
 
             /** @type {ChromeDTO} */
             let result = {
-                id     : chrome.id,
-                type   : chrome.type,
-                openTag: chrome.openTag
+                id  : chrome.id,
+                type: chrome.type,
             };
 
             const CLOSE_TAG_SELECTOR = chrome.type === 'placeholder'
                 ? PLACEHOLDER_SELECTOR : RENDERING_SELECTOR + CLOSE_SELECTOR;
+
+            if ('field' === chrome.type) {
+                result.tag = chrome.tag;
+            } else {
+                result.openTag = chrome.openTag;
+            }
 
             if ('placeholder' === chrome.type) {
                 result.renderings = [];
@@ -185,7 +197,10 @@ class ACT {
                 loop.call(this, result, scopeLevel + 1);
             }
 
-            result.closeTag = dom.nextMatch(chrome.openTag, CLOSE_TAG_SELECTOR);
+            if ('field' !== chrome.type) {
+                result.closeTag = dom.nextMatch(chrome.openTag, CLOSE_TAG_SELECTOR);
+            }
+
             result.template = this.extractTemplate(result);
 
             // Go to next sibling
@@ -209,9 +224,16 @@ class ACT {
                 return this.extractPlaceholderTemplate(chrome);
             case 'rendering':
                 return this.extractRenderingTemplate(chrome);
+            case 'field':
+                return this.extractFieldTemplate(chrome);
         }
     }
 
+    /**
+     * @param {ChromeDTO} chrome
+     *
+     * @void
+     * */
     extractPlaceholderTemplate(chrome) {
         /** @type {HTMLElement} */
         let temp = dom.eval('<div />');
@@ -229,11 +251,10 @@ class ACT {
         dom.detach(chrome.openTag);
         dom.detach(chrome.closeTag);
 
-        placeholderElem.parentElement.insertBefore(placeholderComponent, placeholderElem);
+        dom.insertBefore(placeholderElem, placeholderComponent);
         placeholderElem.appendChild(renderingComponentTag);
 
         temp.appendChild(placeholderElem);
-
 
         return temp.innerHTML;
     }
@@ -253,6 +274,24 @@ class ACT {
 
 
         return temp.innerHTML;
+    }
+
+    /**
+     * @param {ChromeDTO} chrome
+     *
+     * @void
+     * */
+    extractFieldTemplate(chrome) {
+        /** @type {HTMLElement} */
+        let fieldComponent = dom.eval(this.fieldTemplate(chrome));
+
+        /** @type {HTMLElement} */
+        let fieldTag = chrome.tag;
+
+        dom.insertBefore(fieldTag, fieldComponent);
+        dom.detach(fieldTag);
+
+        return fieldTag.outerHTML;
     }
 }
 
