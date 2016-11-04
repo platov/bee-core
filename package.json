@@ -1,6 +1,6 @@
 {
   "name": "bee-core",
-  "version": "1.0.5",
+  "version": "2.0.0",
   "description": "",
   "main": "dist/bee-core.js",
   "files": [
@@ -15,21 +15,21 @@
     "type": "git",
     "url": "git+https://github.com/platov/bee-core.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["Sitecore", "Experience Editor"],
+  "author": "Alexey Platov",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/platov/bee-core/issues"
   },
   "homepage": "https://github.com/platov/bee-core#readme",
   "devDependencies": {
-    "babel-core": "^6.14.0",
-    "babel-loader": "^6.2.5",
+    "babel-core": "^6.18.2",
+    "babel-loader": "^6.2.7",
     "babel-plugin-transform-runtime": "^6.15.0",
-    "babel-preset-es2015": "^6.14.0",
-    "webpack": "^1.13.2"
+    "babel-preset-es2015": "^6.18.0",
+    "webpack": "^1.13.3"
   },
   "dependencies": {
-    "eventemitter3": ">=1.0.0"
+    "eventemitter3": "^2.0.2"
   }
 }
