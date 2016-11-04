@@ -1,5 +1,7 @@
+'use strict';
+
 import _debounce from 'lodash/debounce';
-import override from '../helpers/override';
+import override from '../utils/override';
 import beeCore from '../';
 
 const EVENT_PREFIX = `field:`;
@@ -31,5 +33,3 @@ override('persistValue', Obj,
         beeCore.mediator.emit(EVENT_PERSIST, this.chrome);
     }
 );
-
-beeCore._registerDOMEvents(EVENT_BEFORE_MODIFIED, EVENT_MODIFIED, EVENT_BEFORE_PERSIST, EVENT_PERSIST);

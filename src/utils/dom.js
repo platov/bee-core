@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * Dom manipulations utility
  * */
@@ -9,7 +11,6 @@ let domUtils = {
      * @param {HTMLElement} context
      *
      * @return {HTMLElement}
-     *
      * */
     find(selector, context) {
         let el = (context || document).querySelectorAll(selector);
@@ -25,7 +26,7 @@ let domUtils = {
     /**
      * Clone HTML Element
      *
-     * @param {string} target
+     * @param {String} target
      *
      * @return {HTMLElement}
      * */
@@ -40,7 +41,6 @@ let domUtils = {
             throw '[beeCore.dom.clone] Invalid arguments.';
         }
 
-
         return el.cloneNode(true);
     },
 
@@ -48,7 +48,7 @@ let domUtils = {
     /**
      * Evaluate HTML string to live DOM
      *
-     * @param {string} data     html string
+     * @param {String} data     html string
      *
      * @return {HTMLElement | Array<HTMLElement>}
      * */
@@ -66,7 +66,9 @@ let domUtils = {
      *
      * @param {HTMLElement} el
      *
-     * @param {string | HTMLElement} selector
+     * @param {String | HTMLElement} selector
+     *
+     * @return {Boolean}
      * */
     is(el, selector) {
         let match = Element.prototype.matchesSelector ||
@@ -93,8 +95,8 @@ let domUtils = {
      * Get next sibling nodes until element with matched selector
      *
      * @param {HTMLElement} el                  Start element
-     * @param {string | HTMLElement} selector   Selector of End element
-     * @param {boolean} onlyElements            Match only Nodes with type === 1 (element)
+     * @param {String | HTMLElement} selector   Selector of End element
+     * @param {Boolean} onlyElements            Only match Nodes with type === 1
      *
      * @return {Array<HTMLElement>}
      * */
@@ -102,12 +104,12 @@ let domUtils = {
         let result = [];
 
         while (el = el.nextSibling) {
-            if (onlyElements && el.nodeType !== 1) {
-                continue;
-            }
-
             if (this.is(el, selector)) {
                 break;
+            }
+
+            if (onlyElements && el.nodeType !== 1) {
+                continue;
             }
 
             result.push(el);
@@ -140,12 +142,13 @@ let domUtils = {
      * Detach element
      *
      * @param {HTMLElement} el
+     *
+     * @void
      * */
     detach(el) {
         el.parentNode.removeChild(el);
-
-        return el;
     },
+
 
     /**
      * Insert before

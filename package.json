@@ -30,8 +30,6 @@
     "webpack": "^1.13.2"
   },
   "dependencies": {
-    "eventemitter3": ">=1.0.0",
-    "jquery": ">=2.1.0",
-    "lodash": ">=4.0.0"
+    "eventemitter3": ">=1.0.0"
   }
 }

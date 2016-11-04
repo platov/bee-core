@@ -1,4 +1,6 @@
-import override from '../helpers/override';
+'use strict';
+
+import override from '../utils/override';
 import beeCore from '../';
 
 const EVENT_PREFIX = `chromeManager:`;
@@ -16,5 +18,3 @@ override('resetChromes', Sitecore.PageModes.ChromeManager,
         beeCore.mediator.emit(EVENT_RESET_CHROMES);
     }
 );
-
-beeCore._registerDOMEvents(EVENT_BEFORE_RESET_CHROMES, EVENT_RESET_CHROMES);

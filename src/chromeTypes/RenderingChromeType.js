@@ -1,4 +1,6 @@
-import override from '../helpers/override';
+'use strict';
+
+import override from '../utils/override';
 import beeCore from '../';
 
 const EVENT_PREFIX = `rendering:`;
@@ -30,5 +32,3 @@ override('handleMessage', Obj,
         beeCore.mediator.emit(EVENT_HANDLE_MESSAGE, this.chrome, message);
     }
 );
-
-beeCore._registerDOMEvents(EVENT_BEFORE_UPDATE, EVENT_UPDATE, EVENT_BEFORE_HANDLE_MESSAGE, EVENT_HANDLE_MESSAGE);

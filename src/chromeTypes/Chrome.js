@@ -1,4 +1,6 @@
-import override from '../helpers/override';
+'use strict';
+
+import override from '../utils/override';
 import beeCore from '../';
 
 const EVENT_PREFIX = `chrome:`;
@@ -32,5 +34,3 @@ override('remove', Obj,
         beeCore.mediator.emit(EVENT_REMOVE, this);
     }
 );
-
-beeCore._registerDOMEvents(EVENT_BEFORE_EMPTY, EVENT_EMPTY, EVENT_BEFORE_REMOVE, EVENT_REMOVE);

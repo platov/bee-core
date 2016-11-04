@@ -1,4 +1,6 @@
-import override from '../helpers/override';
+'use strict';
+
+import override from '../utils/override';
 import beeCore from '../';
 
 const EVENT_PREFIX = `placeholder:`;
@@ -75,6 +77,3 @@ override('_removeRendering', Obj,
         beeCore.mediator.emit(EVENT_REMOVE, this.chrome, renderingChrome);
     }
 );
-
-
-beeCore._registerDOMEvents(EVENT_BEFORE_INSERT, EVENT_INSERT, EVENT_MOVE, EVENT_POP, EVENT_BEFORE_REMOVE, EVENT_REMOVE);

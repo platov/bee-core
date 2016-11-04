@@ -1,4 +1,6 @@
-import override from '../helpers/override';
+'use strict';
+
+import override from '../utils/override';
 import beeCore from '../';
 
 const EVENT_PREFIX = `editFrame:`;
@@ -32,5 +34,3 @@ override('updateEnd', Obj,
         beeCore.mediator.emit(EVENT_UPDATE_END, this.chrome);
     }
 );
-
-beeCore._registerDOMEvents(EVENT_BEFORE_UPDATE_START, EVENT_UPDATE_START, EVENT_BEFORE_UPDATE_END, EVENT_UPDATE_END);

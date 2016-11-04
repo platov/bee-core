@@ -1,4 +1,6 @@
-import override from '../helpers/override';
+'use strict';
+
+import override from '../utils/override';
 import beeCore from '../';
 
 const EVENT_PREFIX = `chromeControls:`;
@@ -13,5 +15,3 @@ override('renderCommandTag', Sitecore.PageModes.ChromeControls.prototype,
         beeCore.mediator.emit(EVENT_RENDER_COMMAND, renderingChrome, __shared.nativeResult[0], this, command);
     }
 );
-
-beeCore._registerDOMEvents(EVENT_BEFORE_RENDER_COMMAND, EVENT_RENDER_COMMAND);
