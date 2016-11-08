@@ -14,6 +14,7 @@
  * @property {String}           template
  * @property {Array<ChromeDTO>} [renderings]
  * @property {Boolean}          isFragment
+ * @property {String}           [fieldValue]
  * */
 
 import dom from './utils/dom';
@@ -252,6 +253,10 @@ class ACT {
                 chrome.closeTag = dom.nextMatch(chrome.openTag, `code[chrometype='${chrome.type}']${CLOSE_SELECTOR}`);
             }
 
+            if('field' === chrome.type) {
+                chrome.fieldValue = this.extractFieldValue(chrome);
+            }
+
             // Extract Chrome template
             chrome.template = this.extractTemplate(chrome);
 
@@ -262,6 +267,21 @@ class ACT {
         }
     }
 
+    extractFieldValue(chrome) {
+        let el, tpl;
+
+        if('image' === chrome.fieldType) {
+            el = chrome.openTag.nextElementSibling;
+            tpl = el.outerHTML;
+
+            return tpl;
+        }
+
+        el = chrome.tag;
+        tpl = el.innerHTML;
+
+        return tpl;
+    }
 
     /**
      * Extract html string for provided Chrome
