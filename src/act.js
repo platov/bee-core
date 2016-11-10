@@ -15,6 +15,7 @@
  * @property {Array<ChromeDTO>} [renderings]
  * @property {Boolean}          isFragment
  * @property {String}           [fieldValue]
+ * @property {Number}           renderTimeStamp
  * */
 
 import dom from './utils/dom';
@@ -259,6 +260,8 @@ class ACT {
 
             // Extract Chrome template
             chrome.template = this.extractTemplate(chrome);
+
+            chrome.renderTimeStamp = +new Date();
 
             // Go to next sibling
             if (chromeElements.length && chromeElements[0].level === scopeLevel) {
