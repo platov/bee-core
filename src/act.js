@@ -261,7 +261,7 @@ class ACT {
             // Extract Chrome template
             chrome.template = this.extractTemplate(chrome);
 
-            chrome.renderTimeStamp = +new Date();
+            chrome.renderTimeStamp = window.performance.now();
 
             // Go to next sibling
             if (chromeElements.length && chromeElements[0].level === scopeLevel) {
