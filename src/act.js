@@ -254,7 +254,7 @@ class ACT {
                 chrome.closeTag = dom.nextMatch(chrome.openTag, `code[chrometype='${chrome.type}']${CLOSE_SELECTOR}`);
             }
 
-            if('field' === chrome.type) {
+            if ('field' === chrome.type) {
                 chrome.fieldValue = this.extractFieldValue(chrome);
             }
 
@@ -273,7 +273,7 @@ class ACT {
     extractFieldValue(chrome) {
         let el, tpl;
 
-        if('image' === chrome.fieldType) {
+        if (chrome.isFragment) {
             el = chrome.openTag.nextElementSibling;
             tpl = el.outerHTML;
 
@@ -425,5 +425,6 @@ class ACT {
         }
     }
 }
+
 
 export default ACT;
