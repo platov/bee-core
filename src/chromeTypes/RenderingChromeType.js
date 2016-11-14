@@ -6,10 +6,10 @@ import beeCore from '../';
 const EVENT_PREFIX = `rendering:`;
 const EVENT_BEFORE_UPDATE = `${EVENT_PREFIX}before-update`;
 const EVENT_UPDATE = `${EVENT_PREFIX}update`;
-const EVENT_BEFORE_END_ACTIVATION = `${EVENT_PREFIX}before-endActivation`;
-const EVENT_END_ACTIVATION = `${EVENT_PREFIX}endActivation`;
 const EVENT_BEFORE_HANDLE_MESSAGE = `${EVENT_PREFIX}before-handleMessage`;
 const EVENT_HANDLE_MESSAGE = `${EVENT_PREFIX}handleMessage`;
+const EVENT_BEFORE_UPDATE_VARIATION_CACHE = `${EVENT_PREFIX}before-updateVariationCache`;
+const EVENT_UPDATE_VARIATION_CACHE = `${EVENT_PREFIX}updateVariationCache`;
 
 let Obj = Sitecore.PageModes.ChromeTypes.Rendering.prototype;
 
@@ -26,20 +26,20 @@ override('update', Obj,
     }
 );
 
-override('_endActivation', Obj,
-    function (__shared, data) {
-        beeCore.mediator.emit(EVENT_BEFORE_END_ACTIVATION, this.chrome);
-    },
-    function (__shared, data) {
-        beeCore.mediator.emit(EVENT_END_ACTIVATION, this.chrome);
-    }
-);
-
 override('handleMessage', Obj,
     function (__shared, message) {
         beeCore.mediator.emit(EVENT_BEFORE_HANDLE_MESSAGE, this.chrome, message);
     },
     function (__shared, message) {
         beeCore.mediator.emit(EVENT_HANDLE_MESSAGE, this.chrome, message);
+    }
+);
+
+override('updateVariationCache', Obj,
+    function (__shared, variation) {
+        beeCore.mediator.emit(EVENT_BEFORE_UPDATE_VARIATION_CACHE, this.chrome, variation);
+    },
+    function (__shared, variation) {
+        beeCore.mediator.emit(EVENT_UPDATE_VARIATION_CACHE, this.chrome, variation);
     }
 );
