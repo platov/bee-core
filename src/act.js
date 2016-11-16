@@ -364,7 +364,7 @@ class ACT {
         dom.detach(chrome.closeTag);
 
         if (content.length === 0) {
-            console.warn(`[bee-core/ACT] No elements found between fragment Chrome tags while extracting Rendering template`, chrome);
+            console.error(`[bee-core/ACT] No elements found between fragment Chrome tags while extracting Rendering template`, chrome);
             return '';
         }
 
